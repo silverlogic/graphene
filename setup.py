@@ -84,7 +84,8 @@ setup(
     packages=find_packages(exclude=["examples*"]),
     install_requires=[
         "graphql-core>=3.1,<3.4",
-        "graphql-relay>=3.1,<3.4",
+        # Our fork of graphql-relay, which allows graphql-core 3.3.
+        "graphql-relay @ git+https://github.com/silverlogic/graphql-relay-py.git@12f067ab63c28e2a60208fe739cca730d88a1e62",
         "python-dateutil>=2.7.0,<3",
         "typing-extensions>=4.7.1,<5",
     ],
