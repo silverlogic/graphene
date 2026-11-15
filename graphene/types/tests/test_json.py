@@ -1,6 +1,7 @@
 from ..json import JSONString
 from ..objecttype import ObjectType
 from ..schema import Schema
+from .utils import FOUND, GRAPHQL_CORE_3_3
 
 
 class Query(ObjectType):
@@ -52,21 +53,28 @@ def test_jsonstring_invalid_query():
     """
     result = schema.execute("{ json(input: 1) }")
     assert result.errors == [
-        {"message": "Expected value of type 'JSONString', found 1."},
+        {"message": f"Expected value of type 'JSONString', {FOUND} 1."},
     ]
 
     result = schema.execute("{ json(input: {}) }")
+    empty_object = "{  }" if GRAPHQL_CORE_3_3 else "{}"
     assert result.errors == [
-        {"message": "Expected value of type 'JSONString', found {}."},
+        {"message": f"Expected value of type 'JSONString', {FOUND} {empty_object}."},
     ]
 
     result = schema.execute('{ json(input: "a") }')
-    assert result.errors == [
-        {
-            "message": "Expected value of type 'JSONString', found \"a\"; "
-            "Badly formed JSONString: Expecting value: line 1 column 1 (char 0)",
-        },
-    ]
+    if GRAPHQL_CORE_3_3:
+        expected = (
+            "Expected value of type 'JSONString', but encountered error "
+            "'Badly formed JSONString: Expecting value: line 1 column 1 (char 0)'; "
+            'found: "a".'
+        )
+    else:
+        expected = (
+            "Expected value of type 'JSONString', found \"a\"; "
+            "Badly formed JSONString: Expecting value: line 1 column 1 (char 0)"
+        )
+    assert result.errors == [{"message": expected}]
 
     result = schema.execute("""{ json(input: "{\\'key\\': 0}") }""")
     assert result.errors == [
@@ -75,6 +83,13 @@ def test_jsonstring_invalid_query():
 
     result = schema.execute("""{ json(input: "{\\"key\\": 0,}") }""")
     assert len(result.errors) == 1
-    assert result.errors[0].message.startswith(
-        'Expected value of type \'JSONString\', found "{\\"key\\": 0,}"; Badly formed JSONString:'
-    )
+    if GRAPHQL_CORE_3_3:
+        assert result.errors[0].message.startswith(
+            "Expected value of type 'JSONString', but encountered error "
+            "'Badly formed JSONString:"
+        )
+        assert result.errors[0].message.endswith('found: "{\\"key\\": 0,}".')
+    else:
+        assert result.errors[0].message.startswith(
+            'Expected value of type \'JSONString\', found "{\\"key\\": 0,}"; Badly formed JSONString:'
+        )

@@ -3,6 +3,7 @@ from ..scalars import Scalar, Int, BigInt, Float, String, Boolean
 from ..schema import Schema
 from graphql import Undefined
 from graphql.language.ast import IntValueNode
+from .utils import FOUND
 
 
 def test_scalar():
@@ -124,21 +125,24 @@ class TestBigInt:
         assert result.errors
         assert len(result.errors) == 1
         assert (
-            result.errors[0].message == "Expected value of type 'BigInt', found \"20\"."
+            result.errors[0].message
+            == f"Expected value of type 'BigInt', {FOUND} \"20\"."
         )
 
         result = schema.execute('{ optional { bigInt(input: "a") } }')
         assert result.errors
         assert len(result.errors) == 1
         assert (
-            result.errors[0].message == "Expected value of type 'BigInt', found \"a\"."
+            result.errors[0].message
+            == f"Expected value of type 'BigInt', {FOUND} \"a\"."
         )
 
         result = schema.execute("{ optional { bigInt(input: true) } }")
         assert result.errors
         assert len(result.errors) == 1
         assert (
-            result.errors[0].message == "Expected value of type 'BigInt', found true."
+            result.errors[0].message
+            == f"Expected value of type 'BigInt', {FOUND} true."
         )
 
 
