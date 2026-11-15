@@ -2,6 +2,7 @@ from ..objecttype import ObjectType
 from ..schema import Schema
 from ..uuid import UUID
 from ..structures import NonNull
+from .utils import FOUND, GRAPHQL_CORE_3_3
 
 
 class Query(ObjectType):
@@ -45,10 +46,11 @@ def test_uuidstring_invalid_argument():
     )
     assert result.errors
     assert len(result.errors) == 1
-    assert (
-        result.errors[0].message
-        == "Variable '$uuid' got invalid value {'not': 'a string'}; UUID cannot represent value: {'not': 'a string'}"
-    )
+    if GRAPHQL_CORE_3_3:
+        expected = "Variable '$uuid' has invalid value: UUID cannot represent value: {'not': 'a string'}"
+    else:
+        expected = "Variable '$uuid' got invalid value {'not': 'a string'}; UUID cannot represent value: {'not': 'a string'}"
+    assert result.errors[0].message == expected
 
 
 def test_uuidstring_optional_uuid_input():
@@ -67,17 +69,28 @@ def test_uuidstring_invalid_query():
     result = schema.execute("{ uuid(input: 1) }")
     assert result.errors
     assert len(result.errors) == 1
-    assert result.errors[0].message == "Expected value of type 'UUID', found 1."
+    assert result.errors[0].message == f"Expected value of type 'UUID', {FOUND} 1."
 
     result = schema.execute('{ uuid(input: "a") }')
     assert result.errors
     assert len(result.errors) == 1
-    assert (
-        result.errors[0].message
-        == "Expected value of type 'UUID', found \"a\"; badly formed hexadecimal UUID string"
-    )
+    if GRAPHQL_CORE_3_3:
+        expected = (
+            "Expected value of type 'UUID', but encountered error "
+            "'badly formed hexadecimal UUID string'; found: \"a\"."
+        )
+    else:
+        expected = (
+            "Expected value of type 'UUID', found \"a\"; "
+            "badly formed hexadecimal UUID string"
+        )
+    assert result.errors[0].message == expected
 
     result = schema.execute("{ requiredUuid(input: null) }")
     assert result.errors
     assert len(result.errors) == 1
-    assert result.errors[0].message == "Expected value of type 'UUID!', found null."
+    if GRAPHQL_CORE_3_3:
+        expected = "Expected value of non-null type 'UUID!' not to be None."
+    else:
+        expected = "Expected value of type 'UUID!', found null."
+    assert result.errors[0].message == expected

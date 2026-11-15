@@ -1,4 +1,5 @@
 from ...types import ObjectType, Schema, String, NonNull
+from ...types.tests.utils import GRAPHQL_CORE_3_3
 
 
 class Query(ObjectType):
@@ -30,7 +31,8 @@ def test_required_input_missing():
     result = schema.execute("{ hello }")
     assert result.errors
     assert len(result.errors) == 1
-    assert (
-        result.errors[0].message
-        == "Field 'hello' argument 'input' of type 'String!' is required, but it was not provided."
-    )
+    if GRAPHQL_CORE_3_3:
+        expected = "Argument 'Query.hello(input:)' of type 'String!' is required, but it was not provided."
+    else:
+        expected = "Field 'hello' argument 'input' of type 'String!' is required, but it was not provided."
+    assert result.errors[0].message == expected
