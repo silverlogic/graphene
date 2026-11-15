@@ -513,7 +513,11 @@ class Schema:
 
         # Execute the query
         kwargs = normalize_execute_kwargs(kwargs)
-        return await subscribe(self.graphql_schema, document, *args, **kwargs)
+        result = subscribe(self.graphql_schema, document, *args, **kwargs)
+        # graphql-core 3.3 may return the async iterator directly instead of an awaitable.
+        if inspect.isawaitable(result):
+            result = await result
+        return result
 
     def introspect(self):
         introspection = self.execute(introspection_query)
